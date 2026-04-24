@@ -1,0 +1,11 @@
+# Secretos — NUNCA subir a Git
+.streamlit/secrets.toml
+
+# Datos locales (ya no se usan en producción)
+progreso_glifing.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
