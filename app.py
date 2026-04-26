@@ -191,9 +191,12 @@ h1,h2,h3,h4,p,.stMarkdown,label,.stCaption{{color:{T['txt']} !important}}
 [data-testid="stSidebar"] .stMarkdown{{text-align:center}}
 [data-testid="stSidebar"] .stMarkdown p,
 [data-testid="stSidebar"] .stMarkdown strong{{text-align:center;display:block}}
-[data-testid="stSidebar"] [data-testid="stImage"]{{display:flex;justify-content:center}}
-[data-testid="stSidebar"] .stRadio>div{{display:flex;flex-direction:column;align-items:center}}
-[data-testid="stSidebar"] .stRadio label{{justify-content:center}}
+[data-testid="stSidebar"] [data-testid="stImage"]{{text-align:center !important}}
+[data-testid="stSidebar"] [data-testid="stImage"] img{{margin:0 auto !important;display:block !important}}
+[data-testid="stSidebar"] .stRadio>div{{display:flex !important;flex-direction:column !important;align-items:center !important}}
+[data-testid="stSidebar"] .stRadio>div>div{{display:flex !important;flex-direction:column !important;align-items:center !important;width:100% !important}}
+[data-testid="stSidebar"] .stRadio>div>div>div{{display:flex !important;justify-content:center !important}}
+[data-testid="stSidebar"] .stRadio label{{display:inline-flex !important;width:auto !important;justify-content:center !important}}
 [data-testid="stSidebar"] .stButton{{display:flex;justify-content:center}}
 [data-testid="stSidebar"] .stButton>button{{margin:0 auto}}
 [data-testid="stSidebar"] .stSelectbox label,
