@@ -22,7 +22,7 @@ from progreso_glifing import (
 )
 
 st.set_page_config(
-    page_title="Fluyo Kids – Método Glifing",
+    page_title="Fluyo Kids",
     page_icon="🦸",
     layout="centered",
 )
@@ -311,7 +311,7 @@ with st.sidebar:
         f'<div style="text-align:center;font-size:.95rem;font-weight:900;'
         f'background:linear-gradient(90deg,{T["gold"]},{T["prim"]});'
         f'-webkit-background-clip:text;-webkit-text-fill-color:transparent">'
-        f'FLUYO KIDS</div>',
+        f'SUPER ERIC</div>',
         unsafe_allow_html=True,
     )
     st.markdown("---")
@@ -364,7 +364,7 @@ with st.sidebar:
     st.markdown("🟢 Nube activa" if get_db_status() else "🟡 Solo esta sesión")
 
 # ── Cabecera ───────────────────────────────────────────────────────────────────
-st.markdown('<div class="titulo">⚡ Fluyo Kids · Método Glifing ⚡</div>', unsafe_allow_html=True)
+st.markdown('<div class="titulo">⚡ Fluyo Kids ⚡</div>', unsafe_allow_html=True)
 st.markdown(f'<div class="subtitulo">¡El superhéroe de la lectura!</div>', unsafe_allow_html=True)
 
 tab_ej, tab_cal, tab_stats = st.tabs(["🦸 Ejercicios","📅 Calendario","📊 Estadísticas"])
@@ -671,4 +671,4 @@ with tab_stats:
             f'{resumen["mensaje"]}</div>', unsafe_allow_html=True)
 
 st.markdown("---")
-st.caption("Fluyo Kids · Método Glifing · ¡El superhéroe de la lectura! 🦸")
+st.caption("Fluyo Kids · ¡El superhéroe de la lectura! 🦸")
