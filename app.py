@@ -212,38 +212,66 @@ def mostrar_heroe_sidebar():
         )
 
 # ── Cronómetro JavaScript ──────────────────────────────────────────────────────
-def mostrar_timer(segundos:int):
+def mostrar_timer(segundos_objetivo: int):
+    # Calcula el tiempo restante real usando el reloj del servidor → sobrevive reruns
+    t0 = st.session_state.get("sesion_t_ej_inicio") or time.time()
+    elapsed     = time.time() - t0
+    left_init   = max(0, segundos_objetivo - int(elapsed))
+    pct_init    = round(left_init / segundos_objetivo * 100) if segundos_objetivo else 0
+    color_init  = "#FF4444" if left_init <= 5 else T["gold"]
+
     components.html(f"""
 <style>
+*{{margin:0;padding:0;box-sizing:border-box}}
+body{{background:transparent;overflow:hidden}}
 .tb{{display:flex;align-items:center;gap:14px;
      background:linear-gradient(135deg,#0d0d1a,#1a1a2e);
-     border-radius:14px;border:2px solid {T['prim']};padding:10px 18px;margin:8px 0}}
-.tic{{font-size:2.8rem;font-weight:900;color:{T['gold']};
-      text-shadow:0 0 18px {T['gold']};min-width:64px;text-align:center}}
-.tbar{{flex:1;height:12px;background:#222;border-radius:6px;overflow:hidden}}
-.tfill{{height:100%;width:100%;border-radius:6px;
-        background:linear-gradient(90deg,#FF4444,{T['gold']},#00CC66);
+     border-radius:14px;border:2px solid {T['prim']};
+     padding:12px 18px;height:78px;width:100%}}
+.left-col{{display:flex;flex-direction:column;align-items:center;min-width:70px}}
+.tlabel{{color:{T['prim']};font-size:.78rem;font-weight:700;letter-spacing:.05em}}
+.tic{{font-size:2.6rem;font-weight:900;line-height:1;
+      text-shadow:0 0 18px {color_init};color:{color_init}}}
+.right-col{{flex:1;display:flex;flex-direction:column;gap:4px}}
+.tbar{{width:100%;height:14px;background:#333;border-radius:7px;overflow:hidden}}
+.tfill{{height:100%;width:{pct_init}%;border-radius:7px;
+        background:linear-gradient(90deg,#FF4444 0%,{T['gold']} 50%,#00CC66 100%);
         transition:width 1s linear}}
-.tlabel{{color:{T['prim']};font-size:.8rem;font-weight:700}}
+.tpct{{color:#888;font-size:.7rem;text-align:right}}
 </style>
 <div class="tb">
-  <div><div class="tlabel">⏱ TIEMPO</div>
-       <div class="tic" id="tc">{segundos}</div></div>
-  <div style="flex:1"><div class="tbar"><div class="tfill" id="tf"></div></div></div>
+  <div class="left-col">
+    <div class="tlabel">⏱ TIEMPO</div>
+    <div class="tic" id="tc">{left_init}</div>
+  </div>
+  <div class="right-col">
+    <div class="tbar"><div class="tfill" id="tf"></div></div>
+    <div class="tpct" id="tp">{pct_init}%</div>
+  </div>
 </div>
 <script>
 (function(){{
-  var total={segundos},left=total;
-  var tc=document.getElementById('tc'),tf=document.getElementById('tf');
-  var iv=setInterval(function(){{
-    left=Math.max(0,left-1);
+  var total={segundos_objetivo}, left={left_init};
+  var tc=document.getElementById('tc');
+  var tf=document.getElementById('tf');
+  var tp=document.getElementById('tp');
+  function update(){{
+    var pct=Math.round(left/total*100);
     tc.textContent=left;
-    tf.style.width=(left/total*100)+'%';
+    tf.style.width=pct+'%';
+    tp.textContent=pct+'%';
     if(left<=5){{tc.style.color='#FF4444';tc.style.textShadow='0 0 18px #FF4444';}}
-    if(left===0)clearInterval(iv);
-  }},1000);
+  }}
+  update();
+  if(left>0){{
+    var iv=setInterval(function(){{
+      left=Math.max(0,left-1);
+      update();
+      if(left===0)clearInterval(iv);
+    }},1000);
+  }}
 }})();
-</script>""", height=80)
+</script>""", height=100)
 
 # ── Sidebar ────────────────────────────────────────────────────────────────────
 with st.sidebar:
