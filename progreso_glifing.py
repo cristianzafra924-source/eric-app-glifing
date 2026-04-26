@@ -3,7 +3,7 @@ import calendar
 import streamlit as st
 from datetime import date, timedelta, datetime, timezone
 
-AREAS = ["silabas", "palabras", "dictado", "discriminacion", "completar"]
+AREAS = ["silabas", "palabras", "dictado", "discriminacion", "completar", "frases"]
 
 AREA_NOMBRES = {
     "silabas":        "Sílabas",
@@ -11,6 +11,7 @@ AREA_NOMBRES = {
     "dictado":        "Dictado",
     "discriminacion": "Discriminar letras",
     "completar":      "Completar sílaba",
+    "frases":         "Frases y Trabalenguas",
 }
 
 MENSAJES = [
