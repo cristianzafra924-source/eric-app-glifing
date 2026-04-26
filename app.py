@@ -186,6 +186,20 @@ h1,h2,h3,h4,p,.stMarkdown,label,.stCaption{{color:{T['txt']} !important}}
 [data-testid="stImage"] img{{
     filter:drop-shadow(0 0 22px rgba(255,215,0,.6));
 }}
+
+/* Sidebar — todo centrado */
+[data-testid="stSidebar"] .stMarkdown{{text-align:center}}
+[data-testid="stSidebar"] .stMarkdown p,
+[data-testid="stSidebar"] .stMarkdown strong{{text-align:center;display:block}}
+[data-testid="stSidebar"] [data-testid="stImage"]{{display:flex;justify-content:center}}
+[data-testid="stSidebar"] .stRadio>div{{display:flex;flex-direction:column;align-items:center}}
+[data-testid="stSidebar"] .stRadio label{{justify-content:center}}
+[data-testid="stSidebar"] .stButton{{display:flex;justify-content:center}}
+[data-testid="stSidebar"] .stButton>button{{margin:0 auto}}
+[data-testid="stSidebar"] .stSelectbox label,
+[data-testid="stSidebar"] .stTextInput label,
+[data-testid="stSidebar"] .stToggle label{{text-align:center;display:block;width:100%}}
+[data-testid="stSidebar"] .stCaption{{text-align:center}}
 </style>
 """, unsafe_allow_html=True)
 
