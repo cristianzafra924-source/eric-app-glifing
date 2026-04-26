@@ -323,14 +323,16 @@ with st.sidebar:
 
     # ── Tema de color ──────────────────────────────────────────────────────────
     st.markdown("**🎨 Tema de color**")
-    tema_sel = st.radio(
-        "tema", list(TEMAS.keys()),
-        index=list(TEMAS.keys()).index(st.session_state.tema_nombre),
-        label_visibility="collapsed",
-    )
-    if tema_sel != st.session_state.tema_nombre:
-        st.session_state.tema_nombre = tema_sel
-        st.rerun()
+    for _tnombre in TEMAS.keys():
+        _sel = st.session_state.tema_nombre == _tnombre
+        if st.button(
+            f"⭐ {_tnombre}" if _sel else _tnombre,
+            key=f"tema_btn_{_tnombre}",
+            use_container_width=True,
+            type="primary" if _sel else "secondary",
+        ):
+            st.session_state.tema_nombre = _tnombre
+            st.rerun()
 
     if st.session_state.tema_nombre == "🎨 Personalizar":
         col1, col2 = st.columns(2)
