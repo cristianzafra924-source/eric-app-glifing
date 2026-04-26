@@ -26,13 +26,19 @@ MENSAJES = [
 
 # ── Conexión Supabase (cacheada por instancia de app) ────────────────────────
 
+_SB_URL = "https://hzgkmkacundgxbwcuekk.supabase.co"
+_SB_KEY = "sb_publishable_CgQGi0YCQ_JXuJxi8npMbQ_snp3Paes"
+
 @st.cache_resource(show_spinner=False)
 def _supabase_client():
-    """Devuelve el cliente Supabase o None si no está configurado."""
+    """Devuelve el cliente Supabase o None si no está disponible."""
     try:
         from supabase import create_client
-        url = st.secrets["SUPABASE_URL"]
-        key = st.secrets["SUPABASE_KEY"]
+        try:
+            url = st.secrets["SUPABASE_URL"]
+            key = st.secrets["SUPABASE_KEY"]
+        except Exception:
+            url, key = _SB_URL, _SB_KEY
         return create_client(url, key)
     except Exception:
         return None
