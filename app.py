@@ -182,13 +182,9 @@ h1,h2,h3,h4,p,.stMarkdown,label,.stCaption{{color:{T['txt']} !important}}
 @keyframes bounce{{0%,100%{{transform:translateY(0)}}50%{{transform:translateY(-8px)}}}}
 @keyframes pulse{{0%,100%{{opacity:1}}50%{{opacity:.6}}}}
 
-/* Imagen héroe — funde el encuadre blanco */
+/* Imagen héroe con fondo transparente */
 [data-testid="stImage"] img{{
-    -webkit-mask-image:radial-gradient(ellipse 88% 90% at 50% 48%,
-        black 52%,rgba(0,0,0,.5) 76%,transparent 100%);
-    mask-image:radial-gradient(ellipse 88% 90% at 50% 48%,
-        black 52%,rgba(0,0,0,.5) 76%,transparent 100%);
-    filter:drop-shadow(0 0 20px rgba(255,215,0,.55));
+    filter:drop-shadow(0 0 22px rgba(255,215,0,.6));
 }}
 </style>
 """, unsafe_allow_html=True)
