@@ -55,6 +55,7 @@ _defaults = {
     "tema_nombre":"🌑 Oscuro",
     "color_prim":"#7F77DD","color_bg":"#1E1E1E",
     "bonus_obtenido":False,"tiempo_ultimo_ej":None,
+    "estilo_letra":"imprenta",
     "msg_heroe":random.choice(MENSAJES_BIENVENIDA),
 }
 for k,v in _defaults.items():
@@ -75,7 +76,7 @@ T = get_tema()
 # ── CSS dinámico según tema ────────────────────────────────────────────────────
 st.markdown(f"""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Dancing+Script:wght@700;900&display=swap');
 html,body,[class*="css"]{{font-family:'Nunito',sans-serif}}
 
 /* Tema de fondo */
@@ -167,8 +168,28 @@ h1,h2,h3,h4,p,.stMarkdown,label,.stCaption{{color:{T['txt']} !important}}
 }}
 .pts{{font-size:1.1rem;font-weight:800;color:{T['prim']}}}
 
+/* Estilos de letra */
+.f-cursiva{{font-family:'Dancing Script',cursive !important;font-size:1.12em !important}}
+.f-imprenta{{font-family:'Nunito',sans-serif !important}}
+.f-mayuscula{{font-family:'Nunito',sans-serif !important;text-transform:uppercase !important;letter-spacing:.05em !important}}
+
+/* Botón selector de letra */
+.font-btn-label{{
+    text-align:center;font-size:.72rem;font-weight:800;
+    letter-spacing:.12em;color:{T['prim']};margin:6px 0 2px
+}}
+
 @keyframes bounce{{0%,100%{{transform:translateY(0)}}50%{{transform:translateY(-8px)}}}}
 @keyframes pulse{{0%,100%{{opacity:1}}50%{{opacity:.6}}}}
+
+/* Imagen héroe — funde el encuadre blanco */
+[data-testid="stImage"] img{{
+    -webkit-mask-image:radial-gradient(ellipse 88% 90% at 50% 48%,
+        black 52%,rgba(0,0,0,.5) 76%,transparent 100%);
+    mask-image:radial-gradient(ellipse 88% 90% at 50% 48%,
+        black 52%,rgba(0,0,0,.5) 76%,transparent 100%);
+    filter:drop-shadow(0 0 20px rgba(255,215,0,.55));
+}}
 </style>
 """, unsafe_allow_html=True)
 
@@ -436,32 +457,49 @@ with tab_ej:
             seg = tiempo_objetivo(tipo, st.session_state.dificultad)
             mostrar_timer(seg)
 
+    # ── Selector de tipo de letra ──────────────────────────────────────────────
+    st.markdown('<div class="font-btn-label">🌟 TIPO DE LETRA</div>', unsafe_allow_html=True)
+    _estilos = [("imprenta","📝 Imprenta"),("cursiva","✏️ Cursiva"),("mayuscula","🔠 MAYÚSC.")]
+    _fc1, _fc2, _fc3 = st.columns(3)
+    for _col, (_key, _lbl) in zip([_fc1, _fc2, _fc3], _estilos):
+        with _col:
+            _sel = st.session_state.estilo_letra == _key
+            if st.button(
+                f"⭐ {_lbl}" if _sel else _lbl,
+                key=f"font_{_key}", use_container_width=True,
+                type="primary" if _sel else "secondary",
+            ):
+                st.session_state.estilo_letra = _key
+                st.rerun()
+    fc = f"f-{st.session_state.estilo_letra}"
+    st.markdown("")
+
     # ── Ejercicio ─────────────────────────────────────────────────────────────
     st.markdown(f"### {ej.get('pregunta','')}")
     respuesta = None
 
     if tipo == "silaba":
-        st.markdown(f'<div class="pal-big">{ej["objetivo"]}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="pal-big {fc}">{ej["objetivo"]}</div>', unsafe_allow_html=True)
         respuesta = st.radio("Elige la opción correcta:", ej["opciones"], key="r_sil")
     elif tipo == "palabra":
         sils = ej.get("silabas",[ej["objetivo"]])
-        html = "".join(f'<span class="sil-box">{s}</span>' for s in sils)
+        html = "".join(f'<span class="sil-box {fc}">{s}</span>' for s in sils)
         st.markdown(f'<div style="text-align:center;margin:10px 0">{html}</div>', unsafe_allow_html=True)
         respuesta = ej["objetivo"]
     elif tipo == "dictado":
         st.info("🔊 Tu profesor te dirá la palabra en voz alta.")
         respuesta = st.text_input("Escribe la palabra aquí:", key="r_dic").strip().lower()
     elif tipo == "discriminacion":
-        st.markdown(f'<div class="pal-big">{ej["objetivo"]}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="pal-big {fc}">{ej["objetivo"]}</div>', unsafe_allow_html=True)
         respuesta = st.radio("¿Qué letra es?", ej["opciones"], key="r_dis")
     elif tipo == "completar":
-        st.markdown(f'<div class="pal-big">{ej["palabra_con_hueco"]}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="pal-big {fc}">{ej["palabra_con_hueco"]}</div>', unsafe_allow_html=True)
         respuesta = st.radio("Elige la sílaba correcta:", ej["opciones"], key="r_com")
     elif tipo == "frase":
-        st.markdown(f'<div class="frase-card">{ej["objetivo"]}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="frase-card {fc}">{ej["objetivo"]}</div>', unsafe_allow_html=True)
         respuesta = ej["objetivo"]
     elif tipo == "trabalenguas":
-        st.markdown(f'<div class="trabalenguas-card">🌀 {ej["objetivo"]}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="trabalenguas-card {fc}">🌀 {ej["objetivo"]}</div>', unsafe_allow_html=True)
         respuesta = ej["objetivo"]
 
     # ── Botones ───────────────────────────────────────────────────────────────
