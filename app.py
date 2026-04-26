@@ -193,10 +193,10 @@ h1,h2,h3,h4,p,.stMarkdown,label,.stCaption{{color:{T['txt']} !important}}
 [data-testid="stSidebar"] .stMarkdown strong{{text-align:center;display:block}}
 [data-testid="stSidebar"] [data-testid="stImage"]{{text-align:center !important}}
 [data-testid="stSidebar"] [data-testid="stImage"] img{{margin:0 auto !important;display:block !important}}
-[data-testid="stSidebar"] .stRadio>div{{display:flex !important;flex-direction:column !important;align-items:center !important}}
-[data-testid="stSidebar"] .stRadio>div>div{{display:flex !important;flex-direction:column !important;align-items:center !important;width:100% !important}}
-[data-testid="stSidebar"] .stRadio>div>div>div{{display:flex !important;justify-content:center !important}}
-[data-testid="stSidebar"] .stRadio label{{display:inline-flex !important;width:auto !important;justify-content:center !important}}
+[data-testid="stSidebar"] [data-testid="stRadio"]>div{{display:flex !important;flex-direction:column !important;align-items:center !important}}
+[data-testid="stSidebar"] [data-testid="stRadio"] [role="radiogroup"]{{display:flex !important;flex-direction:column !important;align-items:center !important}}
+[data-testid="stSidebar"] [data-testid="stRadio"] label{{display:inline-flex !important;width:auto !important}}
+[data-testid="stSidebar"] [data-testid="stRadio"] p{{text-align:left !important}}
 [data-testid="stSidebar"] .stButton{{display:flex;justify-content:center}}
 [data-testid="stSidebar"] .stButton>button{{margin:0 auto}}
 [data-testid="stSidebar"] .stSelectbox label,
@@ -237,7 +237,9 @@ def mostrar_heroe(mensaje:str="", size:int=90):
 def mostrar_heroe_sidebar():
     usa_img = os.path.exists(HEROE_IMG)
     if usa_img:
-        st.image(HEROE_IMG, width=110)
+        _, col, _ = st.columns([1, 3, 1])
+        with col:
+            st.image(HEROE_IMG, use_container_width=True)
     else:
         st.markdown(
             '<div style="text-align:center;font-size:60px;'
