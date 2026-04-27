@@ -215,6 +215,18 @@ def ejercicio_trabalenguas(dificultad="medio"):
             "objetivo":tw,"num_palabras":len(tw.split())}
 
 
+def ejercicio_velocidad_bloque(n: int = 12, dificultad: str = "fácil") -> dict:
+    lista = PALABRAS.get(dificultad, PALABRAS["fácil"])
+    palabras = random.sample(lista, min(n, len(lista)))
+    return {
+        "tipo": "velocidad",
+        "pregunta": f"¡Lee estas {len(palabras)} palabras lo más rápido que puedas!",
+        "objetivo": " ".join(palabras),
+        "palabras": palabras,
+        "num_palabras": len(palabras),
+    }
+
+
 def get_ejercicio_aleatorio(dificultad="fácil"):
     opciones = [
         lambda: ejercicio_silabas(),

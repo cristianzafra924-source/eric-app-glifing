@@ -9,7 +9,7 @@ from datetime import date, timedelta
 from ejercicios_glifing import (
     ejercicio_silabas, ejercicio_palabra, ejercicio_dictado,
     ejercicio_discriminacion_letras, ejercicio_completar_silaba,
-    ejercicio_frase, ejercicio_trabalenguas,
+    ejercicio_frase, ejercicio_trabalenguas, ejercicio_velocidad_bloque,
     get_ejercicio_aleatorio, verificar_respuesta,
     MENSAJES_CORRECTO, MENSAJES_INCORRECTO, MENSAJES_BIENVENIDA,
     tiempo_objetivo,
@@ -56,6 +56,8 @@ _defaults = {
     "color_prim":"#7F77DD","color_bg":"#1E1E1E",
     "bonus_obtenido":False,"tiempo_ultimo_ej":None,
     "estilo_letra":"imprenta",
+    "vel_bloque":None,"vel_bloques_hechos":0,"vel_wpms":[],
+    "vel_ultimo_wpm":None,"vel_ultimo_seg":None,
     "msg_heroe":random.choice(MENSAJES_BIENVENIDA),
 }
 for k,v in _defaults.items():
@@ -167,6 +169,23 @@ h1,h2,h3,h4,p,.stMarkdown,label,.stCaption{{color:{T['txt']} !important}}
     font-size:1rem;font-weight:800;color:{T['gold']}
 }}
 .pts{{font-size:1.1rem;font-weight:800;color:{T['prim']}}}
+
+/* Grid de velocidad */
+.vel-grid{{
+    display:grid;grid-template-columns:repeat(3,1fr);
+    gap:10px;padding:18px;margin:10px 0;
+    background:linear-gradient(135deg,{T['bg2']},{T['bg']});
+    border-radius:18px;border:2px solid {T['prim']}
+}}
+.vel-word{{
+    font-size:1.55rem;font-weight:900;color:{T['txt']};
+    text-align:center;padding:10px 4px;border-radius:10px;
+    background:rgba(127,119,221,.13);border:1px solid {T['prim']}
+}}
+.vel-stat{{
+    text-align:center;font-size:1rem;font-weight:800;
+    color:{T['gold']};margin:4px 0
+}}
 
 /* Estilos de letra */
 .f-cursiva{{font-family:'Dancing Script',cursive !important;font-size:1.12em !important}}
@@ -353,7 +372,8 @@ with st.sidebar:
     tipo_ejercicio = st.selectbox(
         "Tipo de ejercicio",
         ["Aleatorio","Sílabas","Leer palabras","Dictado",
-         "Discriminar letras","Completar sílaba","Frases","Trabalenguas"],
+         "Discriminar letras","Completar sílaba","Frases","Trabalenguas",
+         "⚡ Velocidad"],
     )
     st.session_state.modo_timer = st.toggle(
         "⏱ Activar cronómetro", value=st.session_state.modo_timer
@@ -445,135 +465,213 @@ def finalizar_sesion():
     st.session_state.sesion_palabras=0
     st.session_state.sesion_t_palabras=0.0
 
+# ── Modo Velocidad ─────────────────────────────────────────────────────────────
+def mostrar_modo_velocidad():
+    d  = st.session_state.dificultad
+    fc = f"f-{st.session_state.estilo_letra}"
+
+    # Iniciar bloque si no hay uno
+    if st.session_state.vel_bloque is None:
+        st.session_state.vel_bloque        = ejercicio_velocidad_bloque(12, d)
+        st.session_state.sesion_t_ej_inicio = time.time()
+
+    ej = st.session_state.vel_bloque
+
+    st.markdown('<div class="titulo" style="font-size:1.6rem">⚡ VELOCIDAD LECTORA</div>',
+                unsafe_allow_html=True)
+
+    # Resultado del bloque anterior
+    if st.session_state.vel_ultimo_wpm is not None:
+        st.markdown(
+            f'<div class="vel-stat">Bloque {st.session_state.vel_bloques_hechos} · '
+            f'⚡ {st.session_state.vel_ultimo_wpm:.0f} pal/min · '
+            f'⏱ {st.session_state.vel_ultimo_seg:.1f}s</div>',
+            unsafe_allow_html=True,
+        )
+    if st.session_state.vel_bloques_hechos > 1:
+        avg = sum(st.session_state.vel_wpms) / len(st.session_state.vel_wpms)
+        st.markdown(f'<div class="vel-stat" style="font-size:.85rem;opacity:.75">'
+                    f'Media: {avg:.0f} pal/min · {st.session_state.vel_bloques_hechos} bloques</div>',
+                    unsafe_allow_html=True)
+
+    # Grid de palabras
+    html = '<div class="vel-grid">'
+    for p in ej["palabras"]:
+        html += f'<div class="vel-word {fc}">{p}</div>'
+    html += '</div>'
+    st.markdown(html, unsafe_allow_html=True)
+
+    # Botón
+    if st.button("⚡ ¡Ya lo leí! → Siguiente bloque",
+                 use_container_width=True, type="primary"):
+        t0      = st.session_state.sesion_t_ej_inicio or time.time()
+        elapsed = max(time.time() - t0, 0.5)
+        n       = ej["num_palabras"]
+        wpm     = round(n / elapsed * 60, 1)
+
+        st.session_state.vel_wpms.append(wpm)
+        st.session_state.vel_bloques_hechos += 1
+        st.session_state.vel_ultimo_wpm      = wpm
+        st.session_state.vel_ultimo_seg      = round(elapsed, 1)
+
+        # Acumula en estadísticas de sesión
+        if st.session_state.sesion_inicio is None:
+            st.session_state.sesion_inicio = time.time()
+        st.session_state.sesion_ej["palabras"]      += n
+        st.session_state.sesion_ac["palabras"]      += n
+        st.session_state.sesion_palabras             += n
+        st.session_state.sesion_t_palabras           += elapsed
+
+        # Nuevo bloque
+        st.session_state.vel_bloque         = ejercicio_velocidad_bloque(12, d)
+        st.session_state.sesion_t_ej_inicio = time.time()
+        st.rerun()
+
+    st.markdown("---")
+    col_a, col_b = st.columns([2, 1])
+    with col_a:
+        if st.session_state.sesion_inicio is not None:
+            mins = round((time.time() - st.session_state.sesion_inicio) / 60, 1)
+            st.caption(f"⏱ {mins} min · {st.session_state.vel_bloques_hechos} bloques")
+    with col_b:
+        if st.session_state.sesion_inicio is not None:
+            if st.button("💾 Finalizar sesión", use_container_width=True):
+                st.session_state.vel_bloque = None
+                st.session_state.vel_ultimo_wpm = None
+                finalizar_sesion(); st.rerun()
+
 # ══════════════════════════════════════════════════════════════════════════════
 # TAB 1 — EJERCICIOS
 # ══════════════════════════════════════════════════════════════════════════════
 with tab_ej:
-    if st.session_state.ejercicio_actual is None:
-        nuevo_ejercicio()
-    ej   = st.session_state.ejercicio_actual
-    tipo = ej.get("tipo")
+    if tipo_ejercicio == "⚡ Velocidad":
+        mostrar_modo_velocidad()
+    else:
+        if st.session_state.ejercicio_actual is None:
+            nuevo_ejercicio()
+        ej   = st.session_state.ejercicio_actual
+        tipo = ej.get("tipo")
 
-    if st.session_state.sesion_guardada:
-        st.success("✅ ¡Sesión guardada! Mira el Calendario para ver tu progreso.")
-        st.session_state.sesion_guardada = False
+        if st.session_state.sesion_guardada:
+            st.success("✅ ¡Sesión guardada! Mira el Calendario para ver tu progreso.")
+            st.session_state.sesion_guardada = False
 
-    # Mascota
-    if not st.session_state.respondido:
-        mostrar_heroe(st.session_state.msg_heroe, size=75)
-
-    # ── Cronómetro activable por Eric ─────────────────────────────────────────
-    if st.session_state.modo_timer and not st.session_state.respondido:
-        if not st.session_state.timer_iniciado:
-            st.markdown("")
-            if st.button("⏱ ¡INICIAR TIEMPO!", use_container_width=True, key="btn_timer"):
-                st.session_state.timer_iniciado = True
-                st.session_state.sesion_t_ej_inicio = time.time()
-                st.rerun()
-        else:
-            seg = tiempo_objetivo(tipo, st.session_state.dificultad)
-            mostrar_timer(seg)
-
-    # ── Selector de tipo de letra ──────────────────────────────────────────────
-    st.markdown('<div class="font-btn-label">🌟 TIPO DE LETRA</div>', unsafe_allow_html=True)
-    _estilos = [("imprenta","📝 Imprenta"),("cursiva","✏️ Cursiva"),("mayuscula","🔠 MAYÚSC.")]
-    _fc1, _fc2, _fc3 = st.columns(3)
-    for _col, (_key, _lbl) in zip([_fc1, _fc2, _fc3], _estilos):
-        with _col:
-            _sel = st.session_state.estilo_letra == _key
-            if st.button(
-                f"⭐ {_lbl}" if _sel else _lbl,
-                key=f"font_{_key}", use_container_width=True,
-                type="primary" if _sel else "secondary",
-            ):
-                st.session_state.estilo_letra = _key
-                st.rerun()
-    fc = f"f-{st.session_state.estilo_letra}"
-    st.markdown("")
-
-    # ── Ejercicio ─────────────────────────────────────────────────────────────
-    st.markdown(f"### {ej.get('pregunta','')}")
-    respuesta = None
-
-    if tipo == "silaba":
-        st.markdown(f'<div class="pal-big {fc}">{ej["objetivo"]}</div>', unsafe_allow_html=True)
-        respuesta = st.radio("Elige la opción correcta:", ej["opciones"], key="r_sil")
-    elif tipo == "palabra":
-        sils = ej.get("silabas",[ej["objetivo"]])
-        html = "".join(f'<span class="sil-box {fc}">{s}</span>' for s in sils)
-        st.markdown(f'<div style="text-align:center;margin:10px 0">{html}</div>', unsafe_allow_html=True)
-        respuesta = ej["objetivo"]
-    elif tipo == "dictado":
-        st.info("🔊 Tu profesor te dirá la palabra en voz alta.")
-        respuesta = st.text_input("Escribe la palabra aquí:", key="r_dic").strip().lower()
-    elif tipo == "discriminacion":
-        st.markdown(f'<div class="pal-big {fc}">{ej["objetivo"]}</div>', unsafe_allow_html=True)
-        respuesta = st.radio("¿Qué letra es?", ej["opciones"], key="r_dis")
-    elif tipo == "completar":
-        st.markdown(f'<div class="pal-big {fc}">{ej["palabra_con_hueco"]}</div>', unsafe_allow_html=True)
-        respuesta = st.radio("Elige la sílaba correcta:", ej["opciones"], key="r_com")
-    elif tipo == "frase":
-        st.markdown(f'<div class="frase-card {fc}">{ej["objetivo"]}</div>', unsafe_allow_html=True)
-        respuesta = ej["objetivo"]
-    elif tipo == "trabalenguas":
-        st.markdown(f'<div class="trabalenguas-card {fc}">🌀 {ej["objetivo"]}</div>', unsafe_allow_html=True)
-        respuesta = ej["objetivo"]
-
-    # ── Botones ───────────────────────────────────────────────────────────────
-    st.markdown("")
-    col1, col2 = st.columns(2)
-    with col1:
+        # Mascota
         if not st.session_state.respondido:
-            es_lectura = tipo in ("palabra","frase","trabalenguas")
-            label = "✅ ¡Ya lo leí!" if es_lectura else "✅ Comprobar"
-            if st.button(label, use_container_width=True, type="primary"):
-                if not st.session_state.sesion_t_ej_inicio:
+            mostrar_heroe(st.session_state.msg_heroe, size=75)
+
+        # ── Cronómetro activable por Eric ──────────────────────────────────────
+        if st.session_state.modo_timer and not st.session_state.respondido:
+            if not st.session_state.timer_iniciado:
+                st.markdown("")
+                if st.button("⏱ ¡INICIAR TIEMPO!", use_container_width=True, key="btn_timer"):
+                    st.session_state.timer_iniciado = True
                     st.session_state.sesion_t_ej_inicio = time.time()
-                correcto = True if es_lectura else (
-                    str(respuesta).strip().lower() == ej["objetivo"].strip().lower()
-                )
-                registrar_respuesta(correcto)
-                st.session_state.respondido = True
-                st.session_state.resultado  = correcto
-                st.session_state.msg_heroe  = random.choice(
-                    MENSAJES_CORRECTO if correcto else MENSAJES_INCORRECTO
-                )
-                st.rerun()
-    with col2:
-        if st.button("➡️ Siguiente", use_container_width=True):
-            st.session_state.msg_heroe = random.choice(MENSAJES_BIENVENIDA)
-            nuevo_ejercicio(); st.rerun()
+                    st.rerun()
+            else:
+                seg = tiempo_objetivo(tipo, st.session_state.dificultad)
+                mostrar_timer(seg)
 
-    # ── Resultado ──────────────────────────────────────────────────────────────
-    if st.session_state.respondido and st.session_state.resultado is not None:
-        mostrar_heroe(st.session_state.msg_heroe, size=85)
-        if st.session_state.resultado:
-            st.markdown('<div class="ok">🎉 ¡CORRECTO!</div>', unsafe_allow_html=True)
-            if st.session_state.bonus_obtenido:
-                st.markdown(f'<div class="bonus">⚡ ¡BONUS DE VELOCIDAD! ⭐</div>', unsafe_allow_html=True)
-            st.balloons()
-        else:
-            st.markdown(
-                f'<div class="err">❌ La respuesta era: <b>{ej["objetivo"]}</b></div>',
-                unsafe_allow_html=True,
-            )
-        if st.session_state.tiempo_ultimo_ej and st.session_state.timer_iniciado:
-            st.caption(f"⏱ Tiempo: {st.session_state.tiempo_ultimo_ej}s")
+        # ── Selector de tipo de letra ───────────────────────────────────────────
+        st.markdown('<div class="font-btn-label">🌟 TIPO DE LETRA</div>', unsafe_allow_html=True)
+        _estilos = [("imprenta","📝 Imprenta"),("cursiva","✏️ Cursiva"),("mayuscula","🔠 MAYÚSC.")]
+        _fc1, _fc2, _fc3 = st.columns(3)
+        for _col, (_key, _lbl) in zip([_fc1, _fc2, _fc3], _estilos):
+            with _col:
+                _sel = st.session_state.estilo_letra == _key
+                if st.button(
+                    f"⭐ {_lbl}" if _sel else _lbl,
+                    key=f"font_{_key}", use_container_width=True,
+                    type="primary" if _sel else "secondary",
+                ):
+                    st.session_state.estilo_letra = _key
+                    st.rerun()
+        fc = f"f-{st.session_state.estilo_letra}"
+        st.markdown("")
 
-    # ── Pie sesión ────────────────────────────────────────────────────────────
-    st.markdown("---")
-    col_a, col_b = st.columns([2,1])
-    with col_a:
-        if st.session_state.sesion_inicio is not None:
-            mins = round((time.time()-st.session_state.sesion_inicio)/60, 1)
-            n_ej = sum(st.session_state.sesion_ej.values())
-            n_ac = sum(st.session_state.sesion_ac.values())
-            pct  = round(n_ac/n_ej*100 if n_ej else 0)
-            st.caption(f"⏱ {mins} min · {n_ej} ejercicios · {pct}% aciertos")
-    with col_b:
-        if st.session_state.sesion_inicio is not None:
-            if st.button("💾 Finalizar sesión", use_container_width=True):
-                finalizar_sesion(); st.rerun()
+        # ── Ejercicio ──────────────────────────────────────────────────────────
+        st.markdown(f"### {ej.get('pregunta','')}")
+        respuesta = None
+
+        if tipo == "silaba":
+            st.markdown(f'<div class="pal-big {fc}">{ej["objetivo"]}</div>', unsafe_allow_html=True)
+            respuesta = st.radio("Elige la opción correcta:", ej["opciones"], key="r_sil")
+        elif tipo == "palabra":
+            sils = ej.get("silabas",[ej["objetivo"]])
+            html = "".join(f'<span class="sil-box {fc}">{s}</span>' for s in sils)
+            st.markdown(f'<div style="text-align:center;margin:10px 0">{html}</div>', unsafe_allow_html=True)
+            respuesta = ej["objetivo"]
+        elif tipo == "dictado":
+            st.info("🔊 Tu profesor te dirá la palabra en voz alta.")
+            respuesta = st.text_input("Escribe la palabra aquí:", key="r_dic").strip().lower()
+        elif tipo == "discriminacion":
+            st.markdown(f'<div class="pal-big {fc}">{ej["objetivo"]}</div>', unsafe_allow_html=True)
+            respuesta = st.radio("¿Qué letra es?", ej["opciones"], key="r_dis")
+        elif tipo == "completar":
+            st.markdown(f'<div class="pal-big {fc}">{ej["palabra_con_hueco"]}</div>', unsafe_allow_html=True)
+            respuesta = st.radio("Elige la sílaba correcta:", ej["opciones"], key="r_com")
+        elif tipo == "frase":
+            st.markdown(f'<div class="frase-card {fc}">{ej["objetivo"]}</div>', unsafe_allow_html=True)
+            respuesta = ej["objetivo"]
+        elif tipo == "trabalenguas":
+            st.markdown(f'<div class="trabalenguas-card {fc}">🌀 {ej["objetivo"]}</div>', unsafe_allow_html=True)
+            respuesta = ej["objetivo"]
+
+        # ── Botones ────────────────────────────────────────────────────────────
+        st.markdown("")
+        col1, col2 = st.columns(2)
+        with col1:
+            if not st.session_state.respondido:
+                es_lectura = tipo in ("palabra","frase","trabalenguas")
+                label = "✅ ¡Ya lo leí!" if es_lectura else "✅ Comprobar"
+                if st.button(label, use_container_width=True, type="primary"):
+                    if not st.session_state.sesion_t_ej_inicio:
+                        st.session_state.sesion_t_ej_inicio = time.time()
+                    correcto = True if es_lectura else (
+                        str(respuesta).strip().lower() == ej["objetivo"].strip().lower()
+                    )
+                    registrar_respuesta(correcto)
+                    st.session_state.respondido = True
+                    st.session_state.resultado  = correcto
+                    st.session_state.msg_heroe  = random.choice(
+                        MENSAJES_CORRECTO if correcto else MENSAJES_INCORRECTO
+                    )
+                    st.rerun()
+        with col2:
+            if st.button("➡️ Siguiente", use_container_width=True):
+                st.session_state.msg_heroe = random.choice(MENSAJES_BIENVENIDA)
+                nuevo_ejercicio(); st.rerun()
+
+        # ── Resultado ──────────────────────────────────────────────────────────
+        if st.session_state.respondido and st.session_state.resultado is not None:
+            mostrar_heroe(st.session_state.msg_heroe, size=85)
+            if st.session_state.resultado:
+                st.markdown('<div class="ok">🎉 ¡CORRECTO!</div>', unsafe_allow_html=True)
+                if st.session_state.bonus_obtenido:
+                    st.markdown(f'<div class="bonus">⚡ ¡BONUS DE VELOCIDAD! ⭐</div>', unsafe_allow_html=True)
+                st.balloons()
+            else:
+                st.markdown(
+                    f'<div class="err">❌ La respuesta era: <b>{ej["objetivo"]}</b></div>',
+                    unsafe_allow_html=True,
+                )
+            if st.session_state.tiempo_ultimo_ej and st.session_state.timer_iniciado:
+                st.caption(f"⏱ Tiempo: {st.session_state.tiempo_ultimo_ej}s")
+
+        # ── Pie sesión ──────────────────────────────────────────────────────────
+        st.markdown("---")
+        col_a, col_b = st.columns([2,1])
+        with col_a:
+            if st.session_state.sesion_inicio is not None:
+                mins = round((time.time()-st.session_state.sesion_inicio)/60, 1)
+                n_ej = sum(st.session_state.sesion_ej.values())
+                n_ac = sum(st.session_state.sesion_ac.values())
+                pct  = round(n_ac/n_ej*100 if n_ej else 0)
+                st.caption(f"⏱ {mins} min · {n_ej} ejercicios · {pct}% aciertos")
+        with col_b:
+            if st.session_state.sesion_inicio is not None:
+                if st.button("💾 Finalizar sesión", use_container_width=True):
+                    finalizar_sesion(); st.rerun()
 
 # ══════════════════════════════════════════════════════════════════════════════
 # TAB 2 — CALENDARIO
