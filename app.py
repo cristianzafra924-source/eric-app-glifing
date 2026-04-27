@@ -472,8 +472,9 @@ def mostrar_modo_velocidad():
 
     # Iniciar bloque si no hay uno
     if st.session_state.vel_bloque is None:
-        st.session_state.vel_bloque        = ejercicio_velocidad_bloque(12, d)
-        st.session_state.sesion_t_ej_inicio = time.time()
+        st.session_state.vel_bloque          = ejercicio_velocidad_bloque(12, d)
+        st.session_state.timer_iniciado      = False
+        st.session_state.sesion_t_ej_inicio  = None if st.session_state.modo_timer else time.time()
 
     ej = st.session_state.vel_bloque
 
@@ -494,6 +495,16 @@ def mostrar_modo_velocidad():
                     f'Media: {avg:.0f} pal/min · {st.session_state.vel_bloques_hechos} bloques</div>',
                     unsafe_allow_html=True)
 
+    # ── Cronómetro (igual que otros ejercicios) ────────────────────────────────
+    if st.session_state.modo_timer:
+        if not st.session_state.timer_iniciado:
+            if st.button("⏱ ¡INICIAR TIEMPO!", use_container_width=True, key="btn_timer_vel"):
+                st.session_state.timer_iniciado     = True
+                st.session_state.sesion_t_ej_inicio = time.time()
+                st.rerun()
+        else:
+            mostrar_timer(60)
+
     # Grid de palabras
     html = '<div class="vel-grid">'
     for p in ej["palabras"]:
@@ -501,7 +512,7 @@ def mostrar_modo_velocidad():
     html += '</div>'
     st.markdown(html, unsafe_allow_html=True)
 
-    # Botón
+    # Botón principal
     if st.button("⚡ ¡Ya lo leí! → Siguiente bloque",
                  use_container_width=True, type="primary"):
         t0      = st.session_state.sesion_t_ej_inicio or time.time()
@@ -517,14 +528,15 @@ def mostrar_modo_velocidad():
         # Acumula en estadísticas de sesión
         if st.session_state.sesion_inicio is None:
             st.session_state.sesion_inicio = time.time()
-        st.session_state.sesion_ej["palabras"]      += n
-        st.session_state.sesion_ac["palabras"]      += n
-        st.session_state.sesion_palabras             += n
-        st.session_state.sesion_t_palabras           += elapsed
+        st.session_state.sesion_ej["palabras"]  += n
+        st.session_state.sesion_ac["palabras"]  += n
+        st.session_state.sesion_palabras         += n
+        st.session_state.sesion_t_palabras       += elapsed
 
-        # Nuevo bloque
-        st.session_state.vel_bloque         = ejercicio_velocidad_bloque(12, d)
-        st.session_state.sesion_t_ej_inicio = time.time()
+        # Nuevo bloque — resetea timer
+        st.session_state.vel_bloque          = None
+        st.session_state.timer_iniciado      = False
+        st.session_state.sesion_t_ej_inicio  = None
         st.rerun()
 
     st.markdown("---")
